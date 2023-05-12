@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form id="form" name="form" class='None' action="upload"
+method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+<input id="photo" name="photo" type="file" accept="capture=camera" onchange="javascript:this.form.submit();">
+{{errore}}
+</form>
+<script>
+
+
+</script>
+
+
+{% endblock %}

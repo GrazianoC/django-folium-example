@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
 
 <a href="upload">Upload a photo</a>
@@ -7,17 +7,30 @@
 <br><br>
 
 <div id="map" style="height: 600px; width: 600px;"></div>
+
+{{punti|json_script:"punti_json"}}
 <script>
 
-var map = L.map('map').setView([51.505, -0.09], 13);
+var map = L.map('map').setView([40.47, 17.24], 13);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-var popup = L.popup()
-    .setLatLng([51.513, -0.09])
-    .setContent("I am a standalone popup.")
-    .openOn(map);
+let punti = JSON.parse(document.getElementById('punti_json').textContent)
+
+//per ogni immagine inserisci un marker
+punti.forEach(punto => {
+L.marker([punto.latitude, punto.longitude]).addTo(map)
+//.bindPopup("<b>"+punto.station_name+"</b><br><img src='"+(punto.image.replace("media/",""))+"' width='200' height='200'><br> plastica, cara <br> raccogli .");
+.bindPopup("<b>"+punto.station_name+"</b><br><img src='"+(punto.image.replace("media/",""))+"' width='200' height='200'><br> plastica, cara <br> raccogli .");
+
+});
+
+map.on('click', (event)=> {
+console.log(event.latlng)
+
+})
+
     </script>
 {% endblock %}

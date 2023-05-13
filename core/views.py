@@ -42,11 +42,12 @@ def upload(request):
     
     if request.method == 'POST' and request.FILES['photo']:
         myfile = request.FILES['photo']
-        
+        print(request.POST.get('lat'))
+        print(request.POST.get('lon'))
         fs = FileSystemStorage(location="media/images")
         # print("--->")
         print(str(myfile))
-        if (str(myfile)[-3:]).upper() =="JPG" or (str(myfile)[-4:]).upper() =="HEIC": 
+        if (str(myfile)[-3:]).upper() =="JPG" or (str(myfile)[-4:]).upper() =="HEIC" or (str(myfile)[-4:]).upper() =="JPEG": 
             register_heif_opener()
             print ("-------->",myfile.name)
             filename = fs.save(myfile.name, myfile)
@@ -55,37 +56,42 @@ def upload(request):
             uploadfile=file_upload[1]+"/images/"+file_upload[2]
             
             image_info = get_exif(uploadfile) #estraggo le info della geolocalizzazione
-            if not image_info:
-               context = {'errore':'No EXIF metadata found' }
+            if request.POST.get('lat')=="":
+            
+             if not image_info:
+               context = {'errore':'No EXIF metadata found or no gps found from browser' }
+               print ("-------->No EXIF metadata found",myfile.name)
                return render(request, 'upload.html', context)
-            else:
-             results = get_geotagging(image_info)
-             print (results)
+             else:
+              results = get_geotagging(image_info)
+              print (results)
 
-             #conversione coordinate da formato gradi a decimale
-             lat= ((results["GPSLatitude"][1:-1]).split(", "))
-             latd= ((lat[0]+"° "+lat[1]+"' "+lat[2]+"\" "+results["GPSLatitudeRef"] ))
-             lata= (parse(latd))
-             lon= ((results["GPSLongitude"][1:-1]).split(", "))
-             lond= ((lon[0]+"° "+lon[1]+"' "+lon[2]+"\" "+results["GPSLongitudeRef"] ))
-             lona= (parse(lond))
-             
+              #conversione coordinate da formato gradi a decimale
+              lat= ((results["GPSLatitude"][1:-1]).split(", "))
+              latd= ((lat[0]+"° "+lat[1]+"' "+lat[2]+"\" "+results["GPSLatitudeRef"] ))
+              lata= (parse(latd))
+              lon= ((results["GPSLongitude"][1:-1]).split(", "))
+              lond= ((lon[0]+"° "+lon[1]+"' "+lon[2]+"\" "+results["GPSLongitudeRef"] ))
+              lona= (parse(lond))
+            else:
+              lata=request.POST.get('lat')
+              lona=request.POST.get('lon')
 
                 #cerco indirizzo da coordinate
-             geolocator = geocoders.Nominatim(user_agent="foodwaste")     #cos'era user agent?
-             location = geolocator.reverse(str(lata) +", "+ str(lona))
-             print(location.address)	
+            geolocator = geocoders.Nominatim(user_agent="foodwaste")     #cos'era user agent?
+            location = geolocator.reverse(str(lata) +", "+ str(lona))
+            print(location.address)	
                #Salvo i dati 
-             f = EVChargingLocation.objects.create(
+            f = EVChargingLocation.objects.create(
               station_name="Prova"+str(random.random()), 
               latitude=lata, 
               longitude=lona,  
               address = location.address, 
               image=uploadfile)
-             f.save()
+            f.save()
            
             
-             return redirect('index')
+            return redirect('index')
         else:
             print (request.FILES['photo'])
             return redirect('index')

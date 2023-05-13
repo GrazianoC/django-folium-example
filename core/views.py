@@ -35,34 +35,36 @@ def get_geotagging(exif):
 
 # Create your views here.
 def index(request):
-    context = {}
+    punti = list (EVChargingLocation.objects.values())
+    context = {'punti':punti}
     return render(request, 'index.html', context)
 
 def upload(request):
     
-    if request.method == 'POST' and request.FILES['photo']:
-        myfile = request.FILES['photo']
+    if request.method == 'POST' and request.FILES['photo']: 
+        myfile = request.FILES['photo'] 
         print(request.POST.get('lat'))
         print(request.POST.get('lon'))
-        fs = FileSystemStorage(location="media/images")
+        fs = FileSystemStorage(location="media/images") 
         # print("--->")
         print(str(myfile))
+        #carico solo le 3 tipologia di file jpg, heic e jpeg
         if (str(myfile)[-3:]).upper() =="JPG" or (str(myfile)[-4:]).upper() =="HEIC" or (str(myfile)[-4:]).upper() =="JPEG": 
-            register_heif_opener()
-            print ("-------->",myfile.name)
-            filename = fs.save(myfile.name, myfile)
-            uploaded_file_url = fs.url(filename)
+            register_heif_opener() #carica il lettore di immagine heic
+            
+            filename = fs.save(myfile.name, myfile) ##salva il file nella cartella
+            uploaded_file_url = fs.url(filename) 
             file_upload=uploaded_file_url.split("/")
             uploadfile=file_upload[1]+"/images/"+file_upload[2]
             
             image_info = get_exif(uploadfile) #estraggo le info della geolocalizzazione
-            if request.POST.get('lat')=="":
+            if request.POST.get('lat')=="": #se non leggo le coordinate da browser
             
-             if not image_info:
+             if not image_info: #se non leggo le info exif
                context = {'errore':'No EXIF metadata found or no gps found from browser' }
                print ("-------->No EXIF metadata found",myfile.name)
                return render(request, 'upload.html', context)
-             else:
+             else: #Se leggo le exif queste hanno priorità rispetto alle coordinae del browser
               results = get_geotagging(image_info)
               print (results)
 
@@ -73,7 +75,7 @@ def upload(request):
               lon= ((results["GPSLongitude"][1:-1]).split(", "))
               lond= ((lon[0]+"° "+lon[1]+"' "+lon[2]+"\" "+results["GPSLongitudeRef"] ))
               lona= (parse(lond))
-            else:
+            else: #altrimenti prendo per buone quelle del browser
               lata=request.POST.get('lat')
               lona=request.POST.get('lon')
 
@@ -92,10 +94,10 @@ def upload(request):
            
             
             return redirect('index')
-        else:
+        else: #se non è un jpeg, heic, jpg allora ritorno alla pagina di caricamento
             print (request.FILES['photo'])
             return redirect('index')
-    else:
+    else: #se non mi trovo nel metodo post allora visualizzo la pagina di caricameto
         
         context = {}
         return render(request, 'upload.html', context)
